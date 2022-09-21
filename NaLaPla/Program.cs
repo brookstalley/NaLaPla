@@ -1,13 +1,23 @@
-﻿namespace HelloWorld
+﻿namespace NaLaPla
 {
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Configuration.EnvironmentVariables;
+
     class Program
     {
-        const string OPENAI_API_KEY = "{YOUR API KEY HERE";
-
         static Plan basePlan;
 
         static async Task Main(string[] args)
         {
+            var root = Directory.GetCurrentDirectory();
+            var dotenv = Path.Combine(root, ".env");
+            DotEnv.Load(dotenv);
+
+            var config =
+                new ConfigurationBuilder()
+                    .AddEnvironmentVariables()
+                    .Build();
+
             //Test();
            // return;
             Console.WriteLine("What do you want to plan?");
@@ -53,7 +63,8 @@
         }
 
         static async Task<List<string>> GetSubTasks(Plan plan) {
-            var api = new OpenAI_API.OpenAIAPI(OPENAI_API_KEY, "text-davinci-002");
+            var apiKey = System.Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+            var api = new OpenAI_API.OpenAIAPI(apiKey, "text-davinci-002");
             var prompt = GeneratePrompt(plan);
             OpenAI_API.CompletionResult result = await api.Completions.CreateCompletionAsync(
                 prompt,
