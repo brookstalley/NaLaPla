@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\codebox\\NaLaPla\\NaLaPla.csproj": {}
+    "C:\\codebox\\NaLaPla\\NaLaPla\\NaLaPla.csproj": {}
   },
   "projects": {
-    "C:\\codebox\\NaLaPla\\NaLaPla.csproj": {
+    "C:\\codebox\\NaLaPla\\NaLaPla\\NaLaPla.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\codebox\\NaLaPla\\NaLaPla.csproj",
+        "projectUniqueName": "C:\\codebox\\NaLaPla\\NaLaPla\\NaLaPla.csproj",
         "projectName": "NaLaPla",
-        "projectPath": "C:\\codebox\\NaLaPla\\NaLaPla.csproj",
+        "projectPath": "C:\\codebox\\NaLaPla\\NaLaPla\\NaLaPla.csproj",
         "packagesPath": "C:\\Users\\laliden\\.nuget\\packages\\",
-        "outputPath": "C:\\codebox\\NaLaPla\\obj\\",
+        "outputPath": "C:\\codebox\\NaLaPla\\NaLaPla\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\laliden\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -38,6 +38,14 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "dependencies": {
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[6.0.1, )"
+            },
+            "Microsoft.Extensions.Configuration.EnvironmentVariables": {
+              "target": "Package",
+              "version": "[6.0.1, )"
+            },
             "OpenAI": {
               "target": "Package",
               "version": "[1.2.0, )"
