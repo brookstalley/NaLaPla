@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "0VeSe8ck5uFVGWppHoEg21hrl6DptwaRDcJm8e38dWzOTZPdGopzfYGxkIl85pLFA9BBszLmTebUbSerjDDCHw==",
+  "success": true,
+  "projectFilePath": "C:\\codebox\\NaLaPla\\NaLaPla.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\laliden\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\1.1.1\\microsoft.bcl.asyncinterfaces.1.1.1.nupkg.sha512",
+    "C:\\Users\\laliden\\.nuget\\packages\\newtonsoft.json\\12.0.3\\newtonsoft.json.12.0.3.nupkg.sha512",
+    "C:\\Users\\laliden\\.nuget\\packages\\openai\\1.2.0\\openai.1.2.0.nupkg.sha512"
+  ],
+  "logs": []
+}
