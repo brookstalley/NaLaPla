@@ -1,10 +1,12 @@
 namespace NaLaPla
 {
-    public class Plan {
+public class Task {
         public string? description;
-        public int planLevel;        
-        public List<Plan>? planSteps;
+        public int planLevel;    
 
-        public Plan? parent;
+        public List<string> subTaskDescriptions = new List<string>();    
+        public List<Task> subTasks = new List<Task>();
+
+        public Task? parent;
     }
 }
