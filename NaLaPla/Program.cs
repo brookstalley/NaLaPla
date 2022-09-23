@@ -116,7 +116,7 @@
                 //var prompt = $"Please specify one or two steps that needs to be done to {plan.description} when you {basePlan.description}";
                 var prompt = $"Your task is to {basePlan.description}. Repeat the list and add {ExpandSubtaskCount} subtasks to each of the items.\n\n";
                 prompt += Util.GetNumberedSteps(plan);
-                prompt += "END";
+                prompt += "END LIST";
                 Console.WriteLine(prompt);
                 return prompt;
             }
@@ -128,7 +128,7 @@
                 */
                 var prompt = $"Below is part of a plan to {basePlan.description}. Repeat the list and add {ExpandSubtaskCount} subtasks to each of the items\n\n";
                 prompt += Util.GetNumberedSteps(plan);
-                prompt += "END";
+                prompt += "END LIST";
                 Console.WriteLine(prompt);
                 return prompt;
             }

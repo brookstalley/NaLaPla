@@ -50,11 +50,12 @@ namespace NaLaPla
             }
         }
 
-        // Replace numbered sub bullets (i.e. "2.1", "3.2.1", " 2." with "-" marks)
+        // Replace numbered sub bullets (i.e. "2.1", "3.2.1", " 2.", " a." with "-" marks)
         private static string NumberToBullet(string text) {
-            var bulletText = Regex.Replace(text, @"\d.\d.", "-");
-            bulletText = Regex.Replace(bulletText, @"\d.\d", "-");
-            return Regex.Replace(bulletText, @" \d.", "-");
+            var bulletText = Regex.Replace(text, @"\d\.\d.", "-");
+            bulletText = Regex.Replace(bulletText, @"\d\.\d", "-");
+            bulletText = Regex.Replace(bulletText, @" \d\.", "-");
+            return Regex.Replace(bulletText, @" [a-zA-Z]\.", "-");
         }
 
         public static void UpdatePlan(Task plan, string gptResponse) {
