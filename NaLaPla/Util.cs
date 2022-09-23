@@ -100,6 +100,16 @@ namespace NaLaPla
             return steps;
         }
 
+        public static void WriteToConsole(string text, ConsoleColor color) {
+            if (color == null) {
+                Console.ResetColor();
+            }
+            else if (color is ConsoleColor) {
+                Console.ForegroundColor = color;
+            }
+            Console.WriteLine(text);
+        }
+
         public static List<string> TestParseList() {
             var parse1 = "1. Choose a name for the company.\n\n2. Create a logo for the company.\n\n3. Develop a business plan.\n\n4. Raise capital.\n\n5. Find a manufacturing partner.\n\n6. Build a prototype.\n\n7. Test the prototype.\n\n8. Launch the production version of the car.\n\n9. Sell the car.\n\n";
             var parse2 = "\n\n1. Research the electric car market. This includes understanding the current landscape of electric car manufacturers, what consumers want in an electric car, and what features are most important to them.\n\n2. Develop a business plan for your electric car company. This should include your company’s mission and vision, as well as your target market and marketing strategy.\n\n3. Raise capital for your electric car company. This may involve seeking out investors or applying for loans.\n\n4. Hire a team of experts to help you build your electric car company. This may include engineers, designers, and marketing professionals.\n\n5. Develop a prototype of your electric car. This should be a working model that can be used to test and refine your design.\n\n6. Launch your electric car company. This includes marketing your car to consumers and setting up a sales and distribution network.";
@@ -149,7 +159,7 @@ namespace NaLaPla
 
         public static void WritePlan(Task plan) {
             var description = $"- {plan.description}".PadLeft(plan.description.Length + (5*plan.planLevel));
-            Console.WriteLine(description);
+            Util.WriteToConsole(description, ConsoleColor.White);
 
             if (plan.subTasks.Any()) {
                 foreach (var subPlan in plan.subTasks) {
@@ -158,7 +168,8 @@ namespace NaLaPla
             }
             else {
                 foreach (var subTaskDescription in plan.subTaskDescriptions) {
-                    Console.WriteLine($"- {subTaskDescription}".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1))));
+                    string output = $"- {subTaskDescription}".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
+                    Util.WriteToConsole(output, ConsoleColor.White);
                 }
             }
 

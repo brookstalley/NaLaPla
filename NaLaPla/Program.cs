@@ -117,7 +117,7 @@
                 var prompt = $"Your task is to {basePlan.description}. Repeat the list and add {ExpandSubtaskCount} subtasks to each of the items.\n\n";
                 prompt += Util.GetNumberedSteps(plan);
                 prompt += "END LIST";
-                Console.WriteLine(prompt);
+                Util.WriteToConsole(prompt, ConsoleColor.Cyan);
                 return prompt;
             }
             else if (plan.subTaskDescriptions.Count > 0 && ExpandMode == ExpandModeType.AS_A_LIST) {
@@ -129,11 +129,11 @@
                 var prompt = $"Below is part of a plan to {basePlan.description}. Repeat the list and add {ExpandSubtaskCount} subtasks to each of the items\n\n";
                 prompt += Util.GetNumberedSteps(plan);
                 prompt += "END LIST";
-                Console.WriteLine(prompt);
+                Util.WriteToConsole(prompt, ConsoleColor.Cyan);
                 return prompt;
             }
             var firstPrompt =  $"Your job is to {plan.description}. Please specify a numbered list of brief tasks that needs to be done.";
-            Console.WriteLine(firstPrompt);
+            Util.WriteToConsole(firstPrompt, ConsoleColor.Cyan);
             return firstPrompt;
         }
     }
