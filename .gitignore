@@ -1,3 +1,4 @@
 
 NaLaPla/.env
-bin/
+NaLaPla/bin/
+NaLaPla/obj/
