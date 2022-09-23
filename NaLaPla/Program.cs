@@ -14,8 +14,8 @@
         static Task ?basePlan;
 
         static ExpandModeType ExpandMode = ExpandModeType.AS_A_LIST;
-        const int ExpandDepth = 1;
-        const string ExpandSubtaskCount = "two";
+        const int ExpandDepth = 2;
+        const string ExpandSubtaskCount = "four";
         const bool writeOutputFile = true;
 
         static async System.Threading.Tasks.Task Main(string[] args)
