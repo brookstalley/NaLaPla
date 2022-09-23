@@ -1,5 +1,8 @@
 namespace NaLaPla
 {
+    using System.Net;
+    using System;
+    using System.IO;
     using System.Text.RegularExpressions;
 
     public static class Util
@@ -102,12 +105,13 @@ namespace NaLaPla
 
         public static void WriteToConsole(string text, ConsoleColor color) {
             if (color == null) {
-                Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor.White;
             }
             else if (color is ConsoleColor) {
                 Console.ForegroundColor = color;
             }
             Console.WriteLine(text);
+            Console.ForegroundColor = ConsoleColor.White;
         }
 
         public static List<string> TestParseList() {
@@ -157,22 +161,54 @@ namespace NaLaPla
             UpdatePlan(plan2, parse2);
         }
 
-        public static void WritePlan(Task plan) {
-            var description = $"- {plan.description}".PadLeft(plan.description.Length + (5*plan.planLevel));
-            Util.WriteToConsole(description, ConsoleColor.White);
+        public static void WritePlan(Task plan  StreamWriter writer = null {
+            var planText = PlanToString(plan);
+            Util.WriteToConsole(planText, ConsoleColor.White);
+
+             if (writer != null) {
+                writer.Write(planText);
+            }
+        }
+
+        public static string PlanToString(Task plan) {
+            string planText = $"- {plan.description}\n".PadLeft(plan.description.Length + (5*plan.planLevel));
 
             if (plan.subTasks.Any()) {
                 foreach (var subPlan in plan.subTasks) {
-                    WritePlan(subPlan);
+                    planText += PlanToString(subPlan);
                 }
             }
             else {
                 foreach (var subTaskDescription in plan.subTaskDescriptions) {
-                    string output = $"- {subTaskDescription}".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
-                    Util.WriteToConsole(output, ConsoleColor.White);
+                    string output = $"- {subTaskDescription}\n".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
+                    planText += $"{output}";
                 }
             }
+            return planText;
+        }
 
+        public static void WriteResults(Task basePlan, bool writeOutputFile) {
+            StreamWriter writer = null;
+
+            if (writeOutputFile) {
+                var invalid  = Path.GetInvalidFileNameChars();
+                var baseFile = basePlan.description;
+                foreach (var c in Path.GetInvalidFileNameChars()) {
+                    baseFile.Replace(c.ToString(),"-");
+                }
+                var ext = $"";
+                var myFile = $"";
+                while (File.Exists(myFile = baseFile + ".txt" + ext)) {
+                    ext = (ext == "") ? ext = "2" : ext = (Int32.Parse(ext) + 1).ToString();
+                }
+                writer = new StreamWriter(myFile);
+            }
+
+            WritePlan(basePlan, writer);
+
+            if (writeOutputFile) {
+                writer.Close();
+            }
         }
     }
 }

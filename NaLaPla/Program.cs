@@ -16,6 +16,11 @@
         static ExpandModeType ExpandMode = ExpandModeType.AS_A_LIST;
         const int ExpandDepth = 2;
         const string ExpandSubtaskCount = "four";
+        const bool shouldWriteOutputFile = true;
+
+        static List<string> PostProcessingPrompts = new List<string>() {
+            "Repeat the task list below removing any steps that are redundant"
+        };
 
         static async System.Threading.Tasks.Task Main(string[] args)
         {
@@ -41,7 +46,7 @@
                 };
 
             await ExpandPlan(basePlan);
-            Util.WritePlan(basePlan);
+            Util.WriteResults(basePlan, shouldWriteOutputFile);
         }
 
         static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
@@ -97,9 +102,13 @@
         }
 
         static async Task<string> GetGPTResponse(Task plan) {
+            var prompt = GeneratePrompt(plan);
+            return await GetGPTResponse(prompt);
+        }
+
+        static async Task<string> GetGPTResponse(string prompt) {
             var apiKey = System.Environment.GetEnvironmentVariable("OPENAI_API_KEY");
             var api = new OpenAI_API.OpenAIAPI(apiKey, "text-davinci-002");
-            var prompt = GeneratePrompt(plan);
             OpenAI_API.CompletionResult result = await api.Completions.CreateCompletionAsync(
                 prompt,
                 max_tokens: 500,
@@ -117,7 +126,7 @@
                 var prompt = $"Your task is to {basePlan.description}. Repeat the list and add {ExpandSubtaskCount} subtasks to each of the items.\n\n";
                 prompt += Util.GetNumberedSteps(plan);
                 prompt += "END LIST";
-                Util.WriteToConsole(prompt, ConsoleColor.Cyan);
+                Util.WriteToConsole($"\n{prompt}\n", ConsoleColor.Cyan);
                 return prompt;
             }
             else if (plan.subTaskDescriptions.Count > 0 && ExpandMode == ExpandModeType.AS_A_LIST) {
@@ -129,11 +138,11 @@
                 var prompt = $"Below is part of a plan to {basePlan.description}. Repeat the list and add {ExpandSubtaskCount} subtasks to each of the items\n\n";
                 prompt += Util.GetNumberedSteps(plan);
                 prompt += "END LIST";
-                Util.WriteToConsole(prompt, ConsoleColor.Cyan);
+                Util.WriteToConsole($"\n{prompt}\n", ConsoleColor.Cyan);
                 return prompt;
             }
             var firstPrompt =  $"Your job is to {plan.description}. Please specify a numbered list of brief tasks that needs to be done.";
-            Util.WriteToConsole(firstPrompt, ConsoleColor.Cyan);
+            Util.WriteToConsole($"\n{firstPrompt}\n", ConsoleColor.Cyan);
             return firstPrompt;
         }
     }
