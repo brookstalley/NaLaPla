@@ -102,12 +102,13 @@ namespace NaLaPla
 
         public static void WriteToConsole(string text, ConsoleColor color) {
             if (color == null) {
-                Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor.White;
             }
             else if (color is ConsoleColor) {
                 Console.ForegroundColor = color;
             }
             Console.WriteLine(text);
+            Console.ForegroundColor = ConsoleColor.White;
         }
 
         public static List<string> TestParseList() {
@@ -158,21 +159,25 @@ namespace NaLaPla
         }
 
         public static void WritePlan(Task plan) {
-            var description = $"- {plan.description}".PadLeft(plan.description.Length + (5*plan.planLevel));
-            Util.WriteToConsole(description, ConsoleColor.White);
+            var planText = PlanToString(plan);
+            Util.WriteToConsole(planText, ConsoleColor.White);
+        }
+
+        public static string PlanToString(Task plan) {
+            string planText = $"- {plan.description}\n".PadLeft(plan.description.Length + (5*plan.planLevel));
 
             if (plan.subTasks.Any()) {
                 foreach (var subPlan in plan.subTasks) {
-                    WritePlan(subPlan);
+                    planText += PlanToString(subPlan);
                 }
             }
             else {
                 foreach (var subTaskDescription in plan.subTaskDescriptions) {
-                    string output = $"- {subTaskDescription}".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
-                    Util.WriteToConsole(output, ConsoleColor.White);
+                    string output = $"- {subTaskDescription}\n".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
+                    planText += $"{output}";
                 }
             }
-
+            return planText;
         }
     }
 }
