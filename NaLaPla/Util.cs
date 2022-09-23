@@ -1,5 +1,8 @@
 namespace NaLaPla
 {
+    using System.Net;
+    using System;
+    using System.IO;
     using System.Text.RegularExpressions;
 
     public static class Util
@@ -158,9 +161,13 @@ namespace NaLaPla
             UpdatePlan(plan2, parse2);
         }
 
-        public static void WritePlan(Task plan) {
+        public static void WritePlan(Task plan  StreamWriter writer = null {
             var planText = PlanToString(plan);
             Util.WriteToConsole(planText, ConsoleColor.White);
+
+             if (writer != null) {
+                writer.Write(planText);
+            }
         }
 
         public static string PlanToString(Task plan) {
@@ -178,6 +185,30 @@ namespace NaLaPla
                 }
             }
             return planText;
+        }
+
+        public static void WriteResults(Task basePlan, bool writeOutputFile) {
+            StreamWriter writer = null;
+
+            if (writeOutputFile) {
+                var invalid  = Path.GetInvalidFileNameChars();
+                var baseFile = basePlan.description;
+                foreach (var c in Path.GetInvalidFileNameChars()) {
+                    baseFile.Replace(c.ToString(),"-");
+                }
+                var ext = $"";
+                var myFile = $"";
+                while (File.Exists(myFile = baseFile + ".txt" + ext)) {
+                    ext = (ext == "") ? ext = "2" : ext = (Int32.Parse(ext) + 1).ToString();
+                }
+                writer = new StreamWriter(myFile);
+            }
+
+            WritePlan(basePlan, writer);
+
+            if (writeOutputFile) {
+                writer.Close();
+            }
         }
     }
 }

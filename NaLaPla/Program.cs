@@ -16,6 +16,7 @@
         static ExpandModeType ExpandMode = ExpandModeType.AS_A_LIST;
         const int ExpandDepth = 2;
         const string ExpandSubtaskCount = "four";
+        const bool shouldWriteOutputFile = true;
 
         static List<string> PostProcessingPrompts = new List<string>() {
             "Repeat the task list below removing any steps that are redundant"
@@ -45,7 +46,7 @@
                 };
 
             await ExpandPlan(basePlan);
-            Util.WritePlan(basePlan);
+            Util.WriteResults(basePlan, shouldWriteOutputFile);
         }
 
         static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
