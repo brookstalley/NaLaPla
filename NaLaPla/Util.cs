@@ -1,3 +1,6 @@
+using System.Net;
+using System;
+using System.IO;
 namespace NaLaPla
 {
     using System.Text.RegularExpressions;
@@ -146,21 +149,53 @@ namespace NaLaPla
             UpdatePlan(plan2, parse2);
         }
 
-        public static void WritePlan(Task plan) {
+        public static void WritePlan(Task plan, StreamWriter writer = null) {
             var description = $"- {plan.description}".PadLeft(plan.description.Length + (5*plan.planLevel));
             Console.WriteLine(description);
+            if (writer != null) {
+                writer.WriteLine(description);
+            }
 
             if (plan.subTasks.Any()) {
                 foreach (var subPlan in plan.subTasks) {
-                    WritePlan(subPlan);
+                    WritePlan(subPlan, writer);
                 }
             }
             else {
                 foreach (var subTaskDescription in plan.subTaskDescriptions) {
-                    Console.WriteLine($"- {subTaskDescription}".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1))));
+                    var thisLine = $"- {subTaskDescription}".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
+                    Console.WriteLine(thisLine);
+                    if (writer != null) {
+                        writer.WriteLine(thisLine);
+                    }
                 }
             }
 
         }
+
+        public static void WriteResults(Task basePlan, bool writeOutputFile) {
+            StreamWriter writer = null;
+
+            if (writeOutputFile) {
+                var invalid  = Path.GetInvalidFileNameChars();
+                var baseFile = basePlan.description;
+                foreach (var c in Path.GetInvalidFileNameChars()) {
+                    baseFile.Replace(c.ToString(),"-");
+                }
+                var ext = $"";
+                var myFile = $"";
+                while (File.Exists(myFile = baseFile + ".plan" + ext)) {
+                    ext = (ext == "") ? ext = "2" : ext = (Int32.Parse(ext) + 1).ToString();
+                }
+                writer = new StreamWriter(myFile);
+            }
+
+            WritePlan(basePlan, writer);
+
+            if (writeOutputFile) {
+                writer.Close();
+            }
+        }
+
     }
 }

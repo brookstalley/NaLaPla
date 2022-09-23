@@ -2,3 +2,4 @@
 NaLaPla/.env
 **/bin
 **/obj
+**/*.plan*
