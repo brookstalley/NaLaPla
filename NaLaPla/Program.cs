@@ -97,8 +97,7 @@
                     }
                 }
             }
-            
-
+            Util.DisplayProgress(basePlan);
         }
 
         static async Task<string> GetGPTResponse(Task plan) {

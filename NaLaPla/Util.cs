@@ -161,7 +161,7 @@ namespace NaLaPla
             UpdatePlan(plan2, parse2);
         }
 
-        public static void WritePlan(Task plan  StreamWriter writer = null {
+        public static void WritePlan(Task plan,  StreamWriter writer = null) {
             var planText = PlanToString(plan);
             Util.WriteToConsole(planText, ConsoleColor.White);
 
@@ -208,6 +208,34 @@ namespace NaLaPla
 
             if (writeOutputFile) {
                 writer.Close();
+            }
+        }
+
+        static IEnumerable<T> DepthFirstTreeTraversal<T>(T root, Func<T, IEnumerable<T>> children)      
+        {
+            var stack = new Stack<T>();
+            stack.Push(root);
+            while(stack.Count != 0)
+            {
+                var current = stack.Pop();
+                // If you don't care about maintaining child order then remove the Reverse.
+                foreach(var child in children(current).Reverse())
+                    stack.Push(child);
+                yield return current;
+            }
+        }
+
+        static List<Task> AllChildren(Task start)
+        {
+            return DepthFirstTreeTraversal(start, c=>c.subTasks).ToList();
+        }
+
+        public static void DisplayProgress(Task basePlan) {
+            WriteToConsole("\n\nProgress:\n",ConsoleColor.Blue);
+            var all = AllChildren(basePlan);
+            foreach (var t in all) {
+                var status = $"- {t.description} ({t.state}) ".PadLeft(t.description.Length + (5*(t.planLevel+1)));
+                WriteToConsole(status, ConsoleColor.White);
             }
         }
     }
