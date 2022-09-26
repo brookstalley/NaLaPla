@@ -17,6 +17,7 @@
         const int ExpandDepth = 2;
         const string ExpandSubtaskCount = "four";
         const bool shouldWriteOutputFile = true;
+        const bool parallelGPTRequests = false;
 
         static List<string> PostProcessingPrompts = new List<string>() {
             "Repeat the task list below removing any steps that are redundant"
@@ -35,8 +36,8 @@
 
             //Util.TestParseMultiList();
             //return;
-
-            Console.WriteLine("What do you want to plan?");
+            var userPrompt = $"What do you want to plan? (parallelGPTRequests = {parallelGPTRequests})";
+            Console.WriteLine(userPrompt);
             String plan = Console.ReadLine();
 
             basePlan = new Task() {
@@ -49,7 +50,7 @@
             Util.WriteResults(basePlan, shouldWriteOutputFile);
         }
 
-        static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
+       static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
 
             if (planToExpand.planLevel > ExpandDepth) {
                 return;
@@ -72,9 +73,16 @@
                     };
                     planToExpand.subTasks.Add(subPlan);
                 }
-
-                foreach (var subPlan in planToExpand.subTasks) {
-                    await ExpandPlan(subPlan);
+                if (parallelGPTRequests) {
+                    var tasks = planToExpand.subTasks.Select(async subTask =>
+                    {
+                            await ExpandPlan(subTask);
+                    });
+                    await System.Threading.Tasks.Task.WhenAll(tasks);
+                } else {
+                    foreach (var subPlan in planToExpand.subTasks) {
+                        await ExpandPlan(subPlan);
+                    }
                 }
             }
             // Otherwise, expand all at once and then create children
@@ -89,6 +97,15 @@
 
                     // If I haven't reached the end of the plan
                     if (planToExpand.subTasks.Count > 0 ) {
+                        if (parallelGPTRequests) {
+                            var tasks = planToExpand.subTasks.Select(async subTask =>
+                            {
+                                if (subTask.subTaskDescriptions.Any()) {
+                                    await ExpandPlan(subTask);
+                                }
+                            });
+                            await System.Threading.Tasks.Task.WhenAll(tasks);
+                    } else {
                         foreach (var subPlan in planToExpand.subTasks) {
                             if (subPlan.subTaskDescriptions.Any()) {
                                 await ExpandPlan(subPlan);
