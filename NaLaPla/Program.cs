@@ -45,7 +45,7 @@
             Util.WriteResults(basePlan, writeOutputFile);
         }
 
-        static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
+       static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
 
             if (planToExpand.planLevel > ExpandDepth) {
                 return;
@@ -68,10 +68,11 @@
                     };
                     planToExpand.subTasks.Add(subPlan);
                 }
-
-                foreach (var subPlan in planToExpand.subTasks) {
-                    await ExpandPlan(subPlan);
-                }
+                var tasks = planToExpand.subTasks.Select(async subTask =>
+                {
+                        await ExpandPlan(subTask);
+                });
+                await System.Threading.Tasks.Task.WhenAll(tasks);
             }
             // Otherwise, expand all at once and then create children
             else if (ExpandMode == ExpandModeType.AS_A_LIST) {
@@ -85,16 +86,16 @@
 
                     // If I haven't reached the end of the plan
                     if (planToExpand.subTasks.Count > 0 ) {
-                        foreach (var subPlan in planToExpand.subTasks) {
-                            if (subPlan.subTaskDescriptions.Any()) {
-                                await ExpandPlan(subPlan);
+                        var tasks = planToExpand.subTasks.Select(async subTask =>
+                        {
+                            if (subTask.subTaskDescriptions.Any()) {
+                                await ExpandPlan(subTask);
                             }
-                        }
+                        });
+                        await System.Threading.Tasks.Task.WhenAll(tasks);
                     }
                 }
             }
-            
-
         }
 
         static async Task<string> GetGPTResponse(Task plan) {
