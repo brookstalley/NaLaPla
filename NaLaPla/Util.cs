@@ -201,7 +201,7 @@ namespace NaLaPla
             }            
         }
 
-        public static void WriteResults(Task basePlan, string configList, bool writeOutputFile) {
+        public static void WriteResults(Task basePlan, string configList, string runData, bool writeOutputFile) {
             StreamWriter writer = null;
 
             if (writeOutputFile) {
@@ -217,8 +217,9 @@ namespace NaLaPla
                 }
                 writer = new StreamWriter(myFile);
                 writer.WriteLine($"{configList}\n\n");
+                writer.WriteLine($"{runData}\n\n");
             }
-
+            WriteToConsole("\n\n\nPlan:",ConsoleColor.Yellow);
             WritePlan(basePlan, writer);
 
             if (writeOutputFile) {

@@ -44,6 +44,8 @@
             Util.WriteToConsole($"\n\n\n{configList}", ConsoleColor.Green);
             Console.WriteLine($"What do you want to plan?");
             String plan = Console.ReadLine();
+            var runTimer = new System.Diagnostics.Stopwatch();
+            runTimer.Start();
 
             basePlan = new Task() {
                 description = plan,
@@ -52,7 +54,10 @@
                 };
 
             await ExpandPlan(basePlan);
-            Util.WriteResults(basePlan, configList, shouldWriteOutputFile);
+            runTimer.Stop();
+
+            var runData = $"Runtime: {runTimer.Elapsed.ToString(@"m\:ss")}, GPT requests: {GPTRequestsTotal}\n";
+            Util.WriteResults(basePlan, configList, runData, shouldWriteOutputFile);
         }
 
        static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
