@@ -161,7 +161,7 @@ namespace NaLaPla
             UpdatePlan(plan2, parse2);
         }
 
-        public static void WritePlan(Task plan  StreamWriter writer = null {
+        public static void WritePlan(Task plan, StreamWriter writer = null) {
             var planText = PlanToString(plan);
             Util.WriteToConsole(planText, ConsoleColor.White);
 
