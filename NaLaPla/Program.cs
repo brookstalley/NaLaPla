@@ -58,7 +58,7 @@
        static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
 
             if (planToExpand.planLevel > ExpandDepth) {
-                planToExpand.state = "";
+                planToExpand.state = "final";
                 return;
             }
             planToExpand.state = "calling GPT";

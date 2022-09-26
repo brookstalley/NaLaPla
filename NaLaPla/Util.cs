@@ -189,6 +189,18 @@ namespace NaLaPla
             return planText;
         }
 
+        public static void WritePromptAndResponse(Task basePlan, StreamWriter writer) {
+            writer.WriteLine($"\n------------------------------------------------");
+            writer.WriteLine($"Prompt:\n{basePlan.prompt}\n\nResponse:{basePlan.GPTresponse}");
+            if (basePlan.subTasks.Any()) {
+                foreach (var subPlan in basePlan.subTasks) {
+                    if (!String.IsNullOrEmpty(subPlan.prompt)) {
+                        WritePromptAndResponse(subPlan, writer);
+                    }
+                }
+            }            
+        }
+
         public static void WriteResults(Task basePlan, string configList, bool writeOutputFile) {
             StreamWriter writer = null;
 
@@ -210,6 +222,7 @@ namespace NaLaPla
             WritePlan(basePlan, writer);
 
             if (writeOutputFile) {
+                WritePromptAndResponse(basePlan, writer);
                 writer.Close();
             }
         }
