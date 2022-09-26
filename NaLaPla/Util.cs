@@ -61,7 +61,7 @@ namespace NaLaPla
             return Regex.Replace(bulletText, @" [a-zA-Z]\.", "-");
         }
 
-        public static void UpdatePlan(Task plan, string gptResponse) {
+        public static void UpdatePlan(Task plan, string gptResponse, bool showResults) {
 
             // Assume list is like: "1. task1 -subtask1 -subtask2 2. task2 -subtask 1..."
             var bulletedItem = NumberToBullet(gptResponse);
@@ -91,7 +91,9 @@ namespace NaLaPla
                     };
                 plan.subTasks.Add(subPlan);
             }
-            WritePlan(plan);
+            if (showResults) {
+                WritePlan(plan);
+            }
         }
 
         public static string GetNumberedSteps(Task plan) {
@@ -146,7 +148,7 @@ namespace NaLaPla
             var parse1 = "\n\n1. Cut logs to size - use a saw to cut the logs to the desired length\n2. Notch logs for connecting - use a saw to cut notches into the ends of the logs that will fit together\n3. Connect logs at the corners - use nails or screws to attach the logs at the corners\n4. Fill in gaps between logs with chinking - use a chinking material to fill in the gaps between the logs\n5. Add a roof - use roofing material to cover the top of the cabin";
             var plan1Items = new List<string> {"Cut logs to size", "Notch logs for connecting", "Connect logs at the corners", "Fill in gaps between logs with chinking", "Add a roof"};
             var plan1 = MakeTestPlan(plan1Items);
-            UpdatePlan(plan1, parse1);
+            UpdatePlan(plan1, parse1, true);
 
             var parse2 = "\n\n1. Research the electric car market. Understand the competition, what consumers want, and what might be missing in the current market.\n-Analyze the current electric car market\n-Identify the major players and their market share\n-Understand what consumers want in an electric car\n-Determine what is missing in the current market\n\n2. Develop a business plan for your electric car company. This should include your company’s mission, vision, and values, as well as your marketing and sales strategy.\n-Create a mission statement for your company\n-Develop a vision for your company\n-Identify your company values\n-Outline your marketing and sales strategy\n\n3. Create a prototype of your electric car. This will be used to test and validate your design and engineering.\n-Design the prototype of your electric car\n-Build the prototype of your electric car\n-Test the prototype of your electric car\n\n4. Raise capital to fund your electric car company. This can be done through venture capitalists, angel investors, or crowdfunding.\n-Identify the amount of capital needed to fund your company\n-Research different funding options\n-Pitch your company to potential investors\n\n5. Build a team of passionate and talented individuals to help you bring your electric car company to life. This team should include engineers, designers, marketers, and salespeople.\n-Recruit engineers, designers, marketers, and salespeople\n-Hire a team of passionate and talented individuals\n\n6. Launch your electric car company and begin selling cars to consumers. This will require a strong marketing and sales strategy, as well as a well-designed and built car.\n-Develop a marketing and sales strategy\n-Launch your electric car company\n-Sell cars to consumers";
             var plan2Items = new List<string> {
@@ -158,7 +160,7 @@ namespace NaLaPla
                 "Launch your electric car company and begin selling cars to consumers. This will require a strong marketing and sales strategy, as well as a well-designed and built car."
                 };
             var plan2 = MakeTestPlan(plan2Items);
-            UpdatePlan(plan2, parse2);
+            UpdatePlan(plan2, parse2, true);
         }
 
         public static void WritePlan(Task plan,  StreamWriter writer = null) {
@@ -187,7 +189,7 @@ namespace NaLaPla
             return planText;
         }
 
-        public static void WriteResults(Task basePlan, bool writeOutputFile) {
+        public static void WriteResults(Task basePlan, string configList, bool writeOutputFile) {
             StreamWriter writer = null;
 
             if (writeOutputFile) {
@@ -202,6 +204,7 @@ namespace NaLaPla
                     ext = (ext == "") ? ext = "2" : ext = (Int32.Parse(ext) + 1).ToString();
                 }
                 writer = new StreamWriter(myFile);
+                writer.WriteLine($"{configList}\n\n");
             }
 
             WritePlan(basePlan, writer);
@@ -230,11 +233,12 @@ namespace NaLaPla
             return DepthFirstTreeTraversal(start, c=>c.subTasks).ToList();
         }
 
-        public static void DisplayProgress(Task basePlan) {
-            WriteToConsole("\n\nProgress:\n",ConsoleColor.Blue);
+        public static void DisplayProgress(Task basePlan, int GPTRequestsInFlight, bool detailed = false) {
+            WriteToConsole($"\n\nProgress ({GPTRequestsInFlight} GPT requests in flight):",ConsoleColor.Blue);
             var all = AllChildren(basePlan);
             foreach (var t in all) {
-                var status = $"- {t.description} ({t.state}) ".PadLeft(t.description.Length + (5*(t.planLevel+1)));
+                var display = $"- {t.description} ({t.state}) ";
+                var status = display.PadLeft(display.Length + (5*t.planLevel));
                 WriteToConsole(status, ConsoleColor.White);
             }
         }

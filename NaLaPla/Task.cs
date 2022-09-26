@@ -7,5 +7,7 @@ public class Task {
         public List<Task> subTasks = new List<Task>();
         public Task? parent;
         public string state = "created";
+        public string? prompt;
+        public string? GPTresponse;
     }
 }
