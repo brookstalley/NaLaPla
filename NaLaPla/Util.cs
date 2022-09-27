@@ -7,10 +7,16 @@ namespace NaLaPla
 
     public static class Util
     {
+        const string TEXT_FILE_EXTENSION = "txt";
+
+        const string PLAN_FILE_EXTENSION = "plan";
+
+        const string SAVE_DIRECTORY = "output";
+
         public static List<string> ParseSubTaskList(string itemString) {
 
             // Assume list is like: "1. this 2. that 3. other"
-            var list = itemString.Split("\n").ToList();
+            var list = itemString.Split('\r', '\n').ToList();
 
             list = list.Select((n) => {
                 var breakPos = n.IndexOf(". ");
@@ -92,7 +98,7 @@ namespace NaLaPla
                 plan.subTasks.Add(subPlan);
             }
             if (showResults) {
-                WritePlan(plan);
+                PrintPlanToConsole(plan);
             }
         }
 
@@ -116,64 +122,8 @@ namespace NaLaPla
             Console.ForegroundColor = ConsoleColor.White;
         }
 
-        public static List<string> TestParseList() {
-            var parse1 = "1. Choose a name for the company.\n\n2. Create a logo for the company.\n\n3. Develop a business plan.\n\n4. Raise capital.\n\n5. Find a manufacturing partner.\n\n6. Build a prototype.\n\n7. Test the prototype.\n\n8. Launch the production version of the car.\n\n9. Sell the car.\n\n";
-            var parse2 = "\n\n1. Research the electric car market. This includes understanding the current landscape of electric car manufacturers, what consumers want in an electric car, and what features are most important to them.\n\n2. Develop a business plan for your electric car company. This should include your company’s mission and vision, as well as your target market and marketing strategy.\n\n3. Raise capital for your electric car company. This may involve seeking out investors or applying for loans.\n\n4. Hire a team of experts to help you build your electric car company. This may include engineers, designers, and marketing professionals.\n\n5. Develop a prototype of your electric car. This should be a working model that can be used to test and refine your design.\n\n6. Launch your electric car company. This includes marketing your car to consumers and setting up a sales and distribution network.";
-            var parse3 = "\n\n1. Hire staff\n2. Set up the production line";
-            var list = ParseSubTaskList(parse1);
-            list = ParseSubTaskList(parse2);
-            list = ParseSubTaskList(parse3);
-            return list;
-        }
-
-        static Task MakeTestPlan(List<string> items) {
-            var basePlan = new Task() {
-                description = "build a log cabin",
-                planLevel = 0, 
-                subTasks = new List<Task>()
-                };
-            foreach (var item in items) {
-                var subPlan = new Task() {
-                description = item,
-                planLevel = 0, 
-                subTasks = new List<Task>()
-                };
-                basePlan.subTasks.Add(subPlan);
-            }
-            return basePlan;
-        }
-
-        public static void TestParseMultiList() {
-
-            var parse1 = "\n\n1. Cut logs to size - use a saw to cut the logs to the desired length\n2. Notch logs for connecting - use a saw to cut notches into the ends of the logs that will fit together\n3. Connect logs at the corners - use nails or screws to attach the logs at the corners\n4. Fill in gaps between logs with chinking - use a chinking material to fill in the gaps between the logs\n5. Add a roof - use roofing material to cover the top of the cabin";
-            var plan1Items = new List<string> {"Cut logs to size", "Notch logs for connecting", "Connect logs at the corners", "Fill in gaps between logs with chinking", "Add a roof"};
-            var plan1 = MakeTestPlan(plan1Items);
-            UpdatePlan(plan1, parse1, true);
-
-            var parse2 = "\n\n1. Research the electric car market. Understand the competition, what consumers want, and what might be missing in the current market.\n-Analyze the current electric car market\n-Identify the major players and their market share\n-Understand what consumers want in an electric car\n-Determine what is missing in the current market\n\n2. Develop a business plan for your electric car company. This should include your company’s mission, vision, and values, as well as your marketing and sales strategy.\n-Create a mission statement for your company\n-Develop a vision for your company\n-Identify your company values\n-Outline your marketing and sales strategy\n\n3. Create a prototype of your electric car. This will be used to test and validate your design and engineering.\n-Design the prototype of your electric car\n-Build the prototype of your electric car\n-Test the prototype of your electric car\n\n4. Raise capital to fund your electric car company. This can be done through venture capitalists, angel investors, or crowdfunding.\n-Identify the amount of capital needed to fund your company\n-Research different funding options\n-Pitch your company to potential investors\n\n5. Build a team of passionate and talented individuals to help you bring your electric car company to life. This team should include engineers, designers, marketers, and salespeople.\n-Recruit engineers, designers, marketers, and salespeople\n-Hire a team of passionate and talented individuals\n\n6. Launch your electric car company and begin selling cars to consumers. This will require a strong marketing and sales strategy, as well as a well-designed and built car.\n-Develop a marketing and sales strategy\n-Launch your electric car company\n-Sell cars to consumers";
-            var plan2Items = new List<string> {
-                "Research the electric car market. Understand the competition, what consumers want, and what might be missing in the current market.",
-                "Develop a business plan for your electric car company. This should include your company's mission, vision, and values, as well as your marketing and sales strategy.",
-                "Create a prototype of your electric car. This will be used to test and validate your design and engineering.",
-                "Raise capital to fund your electric car company. This can be done through venture capitalists, angel investors, or crowdfunding.",
-                "Build a team of passionate and talented individuals to help you bring your electric car company to life. This team should include engineers, designers, marketers, and salespeople.",
-                "Launch your electric car company and begin selling cars to consumers. This will require a strong marketing and sales strategy, as well as a well-designed and built car."
-                };
-            var plan2 = MakeTestPlan(plan2Items);
-            UpdatePlan(plan2, parse2, true);
-        }
-
-        public static void WritePlan(Task plan,  StreamWriter writer = null) {
-            var planText = PlanToString(plan);
-            Util.WriteToConsole(planText, ConsoleColor.White);
-
-             if (writer != null) {
-                writer.Write(planText);
-            }
-        }
-
         public static string PlanToString(Task plan) {
-            string planText = $"- {plan.description}\n".PadLeft(plan.description.Length + (5*plan.planLevel));
+            string planText = $"- {plan.description}{Environment.NewLine}".PadLeft(plan.description.Length + (5*plan.planLevel));
 
             if (plan.subTasks.Any()) {
                 foreach (var subPlan in plan.subTasks) {
@@ -182,50 +132,88 @@ namespace NaLaPla
             }
             else {
                 foreach (var subTaskDescription in plan.subTaskDescriptions) {
-                    string output = $"- {subTaskDescription}\n".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
+                    string output = $"- {subTaskDescription}{Environment.NewLine}".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
                     planText += $"{output}";
                 }
             }
             return planText;
         }
 
-        public static void WritePromptAndResponse(Task basePlan, StreamWriter writer) {
-            writer.WriteLine($"\n------------------------------------------------");
-            writer.WriteLine($"Prompt:\n{basePlan.prompt}\n\nResponse:{basePlan.GPTresponse}");
-            if (basePlan.subTasks.Any()) {
-                foreach (var subPlan in basePlan.subTasks) {
-                    if (!String.IsNullOrEmpty(subPlan.prompt)) {
-                        WritePromptAndResponse(subPlan, writer);
-                    }
-                }
-            }            
+        public static string PlanToJSON(Task plan) {
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(plan);
+            return json;
+        }        
+
+        public static string LoadString(string planDescription) {
+            var planName = GetSaveName(planDescription, TEXT_FILE_EXTENSION);    
+            var fileName = $"{planName}.{TEXT_FILE_EXTENSION}";
+            var planString = File.ReadAllText($"{SAVE_DIRECTORY}/{fileName}");
+            return planString;
         }
 
-        public static void WriteResults(Task basePlan, string configList, string runData, bool writeOutputFile) {
-            StreamWriter writer = null;
+        public static Task LoadPlan(string planName) {  
+            var fileName = $"{planName}.{PLAN_FILE_EXTENSION}";
+            var planString = File.ReadAllText($"{SAVE_DIRECTORY}/{fileName}");
+            var plan = Newtonsoft.Json.JsonConvert.DeserializeObject<Task>(planString);
+            return plan;
+        }
 
-            if (writeOutputFile) {
-                var invalid  = Path.GetInvalidFileNameChars();
-                var baseFile = basePlan.description;
+        public static string GetPlanName(Task basePlan) {
+            
+            var planName = basePlan.description;
                 foreach (var c in Path.GetInvalidFileNameChars()) {
-                    baseFile.Replace(c.ToString(),"-");
-                }
-                var ext = $"";
-                var myFile = $"";
-                while (File.Exists(myFile = baseFile + ".txt" + ext)) {
-                    ext = (ext == "") ? ext = "2" : ext = (Int32.Parse(ext) + 1).ToString();
-                }
-                writer = new StreamWriter(myFile);
-                writer.WriteLine($"{configList}\n\n");
-                writer.WriteLine($"{runData}\n\n");
+                planName.Replace(c.ToString(),"-");
             }
-            WriteToConsole("\n\n\nPlan:",ConsoleColor.Yellow);
-            WritePlan(basePlan, writer);
+            return planName;
+        }
 
-            if (writeOutputFile) {
-                WritePromptAndResponse(basePlan, writer);
-                writer.Close();
+        private static string GetSaveName(Task basePlan, string fileExtension) {
+            
+            var planName = GetPlanName(basePlan);
+            return GetSaveName(planName, fileExtension);
+        }
+
+        private static string GetSaveName(string planName, string fileExtension) {
+            // If writing to file add counter if file already exits
+            var version = $"";
+            var myFile = $"";
+            while (File.Exists(myFile = $"{SAVE_DIRECTORY}/{planName}{version}.{fileExtension}")) {
+                version = (version == "") ? version = "2" : version = (Int32.Parse(version) + 1).ToString();
             }
+            planName += version;
+            return planName;
+        }
+
+        public static void PrintPlanToConsole(Task plan, string configList="", string runData="") {
+            var planName = GetPlanName(plan);
+            var planString = PlanToString(plan);
+            Util.WriteToConsole(planName, ConsoleColor.Green);
+            Util.WriteToConsole(configList, ConsoleColor.Green);
+            Util.WriteToConsole(runData, ConsoleColor.Green);
+            Util.WriteToConsole(planString, ConsoleColor.White);
+        }
+
+        public static void SavePlanAsText(Task plan, string configList, string runData) {
+            var saveName = GetSaveName(plan, TEXT_FILE_EXTENSION);
+            var planString = $"{configList}\n{runData}\n\n";
+            planString += PlanToString(plan);
+            SaveText(saveName, planString, TEXT_FILE_EXTENSION);
+        }
+
+        public static void SavePlanAsJSON(Task plan) {
+            var saveName = GetSaveName(plan, PLAN_FILE_EXTENSION);
+            var planString = PlanToJSON(plan);
+            SaveText(saveName, planString, PLAN_FILE_EXTENSION);
+        }
+
+        public static void SaveText(string fileName, string text, string extension = TEXT_FILE_EXTENSION) {
+            bool exists = System.IO.Directory.Exists(SAVE_DIRECTORY);
+            if(!exists) {
+                System.IO.Directory.CreateDirectory(SAVE_DIRECTORY);
+            }
+            var writer = new StreamWriter($"{SAVE_DIRECTORY}/{fileName}.{extension}");
+            writer.Write(text);
+            writer.Close();
         }
 
         static IEnumerable<T> DepthFirstTreeTraversal<T>(T root, Func<T, IEnumerable<T>> children)      

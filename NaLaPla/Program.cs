@@ -9,6 +9,13 @@
         AS_A_LIST    
     }
 
+    enum FlagType
+    {
+        LOAD,           // Load plan rather than generate
+
+        DEPTH,          // Overwrite depth
+    }
+
     class Program {
     
         static Task ?basePlan;
@@ -16,14 +23,16 @@
         static int GPTRequestsInFlight = 0;
 
         static ExpandModeType ExpandMode = ExpandModeType.AS_A_LIST;
-        const int ExpandDepth = 2;
+        static int ExpandDepth = 2;
+
+        static int MaxTokens = 500;
+
         const string ExpandSubtaskCount = "four";
-        const bool shouldWriteOutputFile = true;
         const bool parallelGPTRequests = true;
         const bool showPrompts = false; // whether or not to print each prompt as it is submitted to GPT. Prompts always stored in plan.prompt.
-
+        const bool showResults = false; // print the parsed result of each request to the console
         static List<string> PostProcessingPrompts = new List<string>() {
-            "Repeat the task list below removing any steps that are redundant"
+            "Revise the task list below removing any steps that are equivalent\n"
         };
 
         static async System.Threading.Tasks.Task Main(string[] args)
@@ -39,25 +48,80 @@
 
             //Util.TestParseMultiList();
             //return;
-            var configList = $"ExpandDepth = {ExpandDepth}, ExpandSubtaskCount = {ExpandSubtaskCount}, shouldWriteOutputFile = {shouldWriteOutputFile}, "
+            var configList = $"ExpandDepth = {ExpandDepth}, ExpandSubtaskCount = {ExpandSubtaskCount}, "
                 + $"parallelGPTRequests = {parallelGPTRequests}, showPrompts = {showPrompts}";
             Util.WriteToConsole($"\n\n\n{configList}", ConsoleColor.Green);
-            Console.WriteLine($"What do you want to plan?");
-            String plan = Console.ReadLine();
+            Console.WriteLine("What do you want to plan?");
+            var userInput = Console.ReadLine();
             var runTimer = new System.Diagnostics.Stopwatch();
             runTimer.Start();
 
-            basePlan = new Task() {
-                description = plan,
-                planLevel = 0, 
-                subTasks = new List<Task>()
-                };
+            (string planDescription, List<FlagType> flags) = ParseUserInput(userInput);
 
-            await ExpandPlan(basePlan);
-            runTimer.Stop();
+             if (flags.Contains(FlagType.LOAD)) {
+                basePlan = Util.LoadPlan(planDescription);
+            }
+            else {
+                basePlan = new Task() {
+                    description = planDescription,
+                    planLevel = 0, 
+                    subTasks = new List<Task>()
+                    };
 
-            var runData = $"Runtime: {runTimer.Elapsed.ToString(@"m\:ss")}, GPT requests: {GPTRequestsTotal}\n";
-            Util.WriteResults(basePlan, configList, runData, shouldWriteOutputFile);
+                await ExpandPlan(basePlan);
+                runTimer.Stop();
+
+                var runData = $"Runtime: {runTimer.Elapsed.ToString(@"m\:ss")}, GPT requests: {GPTRequestsTotal}\n";
+
+                // Output plan
+                Util.PrintPlanToConsole(basePlan, configList, runData);
+                Util.SavePlanAsText(basePlan, configList, runData);
+                Util.SavePlanAsJSON(basePlan);
+            }
+
+            // Do post processing steps
+            var planString = Util.PlanToString(basePlan);
+            for (int i=0;i<PostProcessingPrompts.Count;i++) {
+                var postPrompt = PostProcessingPrompts[i];
+                var prompt = $"{postPrompt}{Environment.NewLine}START LIST{Environment.NewLine}{planString}{Environment.NewLine}END LIST";
+
+                // Expand Max Tokens to cover size of plan
+                MaxTokens = 2000;
+
+                //var gptResponse = await GetGPTResponse(prompt);
+
+                var outputName = $"{planDescription}-Post{i+1}";
+
+                // IDEA: Can we convert post-processed plan back into plan object?
+                //Util.SaveText(outputName, gptResponse);
+            }
+            
+        }
+
+        static (string, List<FlagType>) ParseUserInput(string userInput) {
+            var pieces = userInput.Split("-").ToList();
+            var planDescription = pieces[0].TrimEnd();
+            pieces.RemoveAt(0);
+            var flags = new List<FlagType>();
+            FlagType flag;
+            foreach (string flagAndValue in pieces) {
+                var flagStrings = flagAndValue.Split(" ");
+                var flagName = flagStrings[0];
+                var flagArg = flagStrings.Count() > 1 ? flagStrings[1] : null;
+                if (Enum.TryParse<FlagType>(flagName, true, out flag)) {
+
+                    // Should overwrite depth amount?
+                    if (flag == FlagType.DEPTH) {
+                        int expandDepth;
+                        if (int.TryParse(flagArg, out expandDepth)) {
+                            ExpandDepth = expandDepth;
+                        }
+                    }
+                    flags.Add(flag);
+                }
+            }
+
+            return (PlanDescription: planDescription, Flags: flags);
         }
 
        static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
@@ -145,7 +209,7 @@
             GPTRequestsInFlight++;
             OpenAI_API.CompletionResult result = await api.Completions.CreateCompletionAsync(
                 prompt,
-                max_tokens: 500,
+                max_tokens: MaxTokens,
                 temperature: 0.2);
             GPTRequestsInFlight--;
             var rawPlan = result.ToString();
