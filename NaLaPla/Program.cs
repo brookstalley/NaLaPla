@@ -9,17 +9,25 @@
         AS_A_LIST    
     }
 
+    enum FlagType
+    {
+        P           // Post process only
+    }
+
     class Program {
     
         static Task ?basePlan;
 
         static ExpandModeType ExpandMode = ExpandModeType.AS_A_LIST;
-        const int ExpandDepth = 2;
+        const int ExpandDepth =0;
+
+        static int MaxTokens = 500;
+
         const string ExpandSubtaskCount = "four";
         const bool shouldWriteOutputFile = true;
 
         static List<string> PostProcessingPrompts = new List<string>() {
-            "Repeat the task list below removing any steps that are redundant"
+            "Revise the task list below removing any steps that are equivalent\n"
         };
 
         static async System.Threading.Tasks.Task Main(string[] args)
@@ -37,16 +45,58 @@
             //return;
 
             Console.WriteLine("What do you want to plan?");
-            String plan = Console.ReadLine();
+            var userInput = Console.ReadLine();
 
-            basePlan = new Task() {
-                description = plan,
-                planLevel = 0, 
-                subTasks = new List<Task>()
-                };
+            (string planDescription, List<FlagType> flags) = ParseUserInput(userInput);
 
-            await ExpandPlan(basePlan);
-            Util.WriteResults(basePlan, shouldWriteOutputFile);
+            var planString = "";
+            if (flags.Contains(FlagType.P)) {
+                planString = Util.LoadPlan(planDescription);
+            }
+            else {
+                basePlan = new Task() {
+                    description = planDescription,
+                    planLevel = 0, 
+                    subTasks = new List<Task>()
+                    };
+
+                await ExpandPlan(basePlan);
+
+                planString = Util.PlanToString(basePlan);
+
+                // Write basic plan
+                Util.OutputPlan(basePlan, shouldWriteOutputFile);
+            }
+
+            // Do post processing steps
+            for (int i=0;i<PostProcessingPrompts.Count;i++) {
+                var postPrompt = PostProcessingPrompts[i];
+                var prompt = $"{postPrompt}{Environment.NewLine}START LIST{Environment.NewLine}{planString}{Environment.NewLine}END LIST";
+
+                // Expand Max Tokens to cover size of plan
+                MaxTokens = 2000;
+
+                var gptResponse = await GetGPTResponse(prompt);
+
+                var outputName = $"{planDescription}-Post{i+1}";
+                Util.OutputPlan(gptResponse, outputName, shouldWriteOutputFile);
+            }
+            
+        }
+
+        static (string, List<FlagType>) ParseUserInput(string userInput) {
+            var pieces = userInput.Split("-").ToList();
+            var planDescription = pieces[0].TrimEnd();
+            pieces.RemoveAt(0);
+            var flags = new List<FlagType>();
+            FlagType flag;
+            foreach (string flagString in pieces) {
+                if (Enum.TryParse<FlagType>(flagString, true, out flag)) {
+                    flags.Add(flag);
+                }
+            }
+
+            return (PlanDescription: planDescription, Flags: flags);
         }
 
         static async System.Threading.Tasks.Task ExpandPlan(Task planToExpand) {
@@ -111,7 +161,7 @@
             var api = new OpenAI_API.OpenAIAPI(apiKey, "text-davinci-002");
             OpenAI_API.CompletionResult result = await api.Completions.CreateCompletionAsync(
                 prompt,
-                max_tokens: 500,
+                max_tokens: MaxTokens,
                 temperature: 0.2);
 
             var rawPlan = result.ToString();

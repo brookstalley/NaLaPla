@@ -7,10 +7,13 @@ namespace NaLaPla
 
     public static class Util
     {
+        const string FILE_EXTENSION = "txt";
+        const string SAVE_DIRECTORY = "output";
+
         public static List<string> ParseSubTaskList(string itemString) {
 
             // Assume list is like: "1. this 2. that 3. other"
-            var list = itemString.Split("\n").ToList();
+            var list = itemString.Split(Environment.NewLine).ToList();
 
             list = list.Select((n) => {
                 var breakPos = n.IndexOf(". ");
@@ -91,7 +94,7 @@ namespace NaLaPla
                     };
                 plan.subTasks.Add(subPlan);
             }
-            WritePlan(plan);
+            OutputPlan(plan);
         }
 
         public static string GetNumberedSteps(Task plan) {
@@ -161,17 +164,8 @@ namespace NaLaPla
             UpdatePlan(plan2, parse2);
         }
 
-        public static void WritePlan(Task plan  StreamWriter writer = null {
-            var planText = PlanToString(plan);
-            Util.WriteToConsole(planText, ConsoleColor.White);
-
-             if (writer != null) {
-                writer.Write(planText);
-            }
-        }
-
         public static string PlanToString(Task plan) {
-            string planText = $"- {plan.description}\n".PadLeft(plan.description.Length + (5*plan.planLevel));
+            string planText = $"- {plan.description}{Environment.NewLine}".PadLeft(plan.description.Length + (5*plan.planLevel));
 
             if (plan.subTasks.Any()) {
                 foreach (var subPlan in plan.subTasks) {
@@ -180,33 +174,65 @@ namespace NaLaPla
             }
             else {
                 foreach (var subTaskDescription in plan.subTaskDescriptions) {
-                    string output = $"- {subTaskDescription}\n".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
+                    string output = $"- {subTaskDescription}{Environment.NewLine}".PadLeft(subTaskDescription.Length + (5*(plan.planLevel+1)));
                     planText += $"{output}";
                 }
             }
             return planText;
         }
 
-        public static void WriteResults(Task basePlan, bool writeOutputFile) {
-            StreamWriter writer = null;
+        public static string LoadPlan(string planDescription) {
+            var planName = GetSaveName(planDescription);    
+            var fileName = $"{planName}.{FILE_EXTENSION}";
+            var planString = File.ReadAllText($"{SAVE_DIRECTORY}/{fileName}");
+            return planString;
+        }
 
-            if (writeOutputFile) {
-                var invalid  = Path.GetInvalidFileNameChars();
-                var baseFile = basePlan.description;
+        public static string GetSaveName(string planDescription, bool writeOutputFile = false) {
+            var planName = planDescription;
                 foreach (var c in Path.GetInvalidFileNameChars()) {
-                    baseFile.Replace(c.ToString(),"-");
-                }
-                var ext = $"";
-                var myFile = $"";
-                while (File.Exists(myFile = baseFile + ".txt" + ext)) {
-                    ext = (ext == "") ? ext = "2" : ext = (Int32.Parse(ext) + 1).ToString();
-                }
-                writer = new StreamWriter(myFile);
+                planName.Replace(c.ToString(),"-");
+            }
+            return planName;
+        }
+
+        public static string GetSaveName(Task basePlan, bool writeOutputFile) {
+            
+            var planName = basePlan.description;
+                foreach (var c in Path.GetInvalidFileNameChars()) {
+                planName.Replace(c.ToString(),"-");
             }
 
-            WritePlan(basePlan, writer);
+            // If writing to file add counter if file already exits
+            if (writeOutputFile) {
+                var ext = $"";
+                var myFile = $"";
+                while (File.Exists(myFile = $"{SAVE_DIRECTORY}/{planName}{ext}.{FILE_EXTENSION}")) {
+                    ext = (ext == "") ? ext = "2" : ext = (Int32.Parse(ext) + 1).ToString();
+                }
+                planName += ext;
+            }
+            return planName;
+        }
+
+        public static void OutputPlan(Task basePlan, bool writeOutputFile = false) {
+
+            var baseFileName = GetSaveName(basePlan, writeOutputFile);
+            var planString = PlanToString(basePlan);
+            OutputPlan(planString, baseFileName, writeOutputFile);
+        }
+
+        public static void OutputPlan(string planString, string planName, bool writeOutputFile) {
+            Util.WriteToConsole(planName, ConsoleColor.Green);
+            Util.WriteToConsole(planString, ConsoleColor.White);
 
             if (writeOutputFile) {
+                bool exists = System.IO.Directory.Exists(SAVE_DIRECTORY);
+                if(!exists) {
+                    System.IO.Directory.CreateDirectory(SAVE_DIRECTORY);
+                }
+                var writer = new StreamWriter($"{SAVE_DIRECTORY}/{planName}.{FILE_EXTENSION}");
+                writer.Write(planString);
                 writer.Close();
             }
         }
