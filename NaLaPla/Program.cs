@@ -11,9 +11,9 @@
 
     enum FlagType
     {
-        P,           // Post process only
+        LOAD,           // Load plan rather than generate
 
-        D,          // Overwrite depth
+        DEPTH,          // Overwrite depth
     }
 
     class Program {
@@ -26,7 +26,6 @@
         static int MaxTokens = 500;
 
         const string ExpandSubtaskCount = "four";
-        const bool shouldWriteOutputFile = true;
 
         static List<string> PostProcessingPrompts = new List<string>() {
             "Revise the task list below removing any steps that are equivalent\n"
@@ -51,9 +50,8 @@
 
             (string planDescription, List<FlagType> flags) = ParseUserInput(userInput);
 
-            var planString = "";
-            if (flags.Contains(FlagType.P)) {
-                planString = Util.LoadPlan(planDescription);
+            if (flags.Contains(FlagType.LOAD)) {
+                basePlan = Util.LoadPlan(planDescription);
             }
             else {
                 basePlan = new Task() {
@@ -64,13 +62,14 @@
 
                 await ExpandPlan(basePlan);
 
-                planString = Util.PlanToString(basePlan);
-
-                // Write basic plan
-                Util.OutputPlan(basePlan, shouldWriteOutputFile);
+                // Output plan
+                Util.PrintPlanToConsole(basePlan);
+                Util.SavePlanAsText(basePlan);
+                Util.SavePlanAsJSON(basePlan);
             }
 
             // Do post processing steps
+            var planString = Util.PlanToString(basePlan);
             for (int i=0;i<PostProcessingPrompts.Count;i++) {
                 var postPrompt = PostProcessingPrompts[i];
                 var prompt = $"{postPrompt}{Environment.NewLine}START LIST{Environment.NewLine}{planString}{Environment.NewLine}END LIST";
@@ -81,7 +80,9 @@
                 var gptResponse = await GetGPTResponse(prompt);
 
                 var outputName = $"{planDescription}-Post{i+1}";
-                Util.OutputPlan(gptResponse, outputName, shouldWriteOutputFile);
+
+                // IDEA: Can we convert post-processed plan back into plan object?
+                Util.SaveText(outputName, gptResponse);
             }
             
         }
@@ -99,7 +100,7 @@
                 if (Enum.TryParse<FlagType>(flagName, true, out flag)) {
 
                     // Should overwrite depth amount?
-                    if (flag == FlagType.D) {
+                    if (flag == FlagType.DEPTH) {
                         int expandDepth;
                         if (int.TryParse(flagArg, out expandDepth)) {
                             ExpandDepth = expandDepth;
