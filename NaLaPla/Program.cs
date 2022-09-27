@@ -11,7 +11,9 @@
 
     enum FlagType
     {
-        P           // Post process only
+        P,           // Post process only
+
+        D,          // Overwrite depth
     }
 
     class Program {
@@ -19,7 +21,7 @@
         static Task ?basePlan;
 
         static ExpandModeType ExpandMode = ExpandModeType.AS_A_LIST;
-        const int ExpandDepth =0;
+        static int ExpandDepth = 2;
 
         static int MaxTokens = 500;
 
@@ -90,8 +92,19 @@
             pieces.RemoveAt(0);
             var flags = new List<FlagType>();
             FlagType flag;
-            foreach (string flagString in pieces) {
-                if (Enum.TryParse<FlagType>(flagString, true, out flag)) {
+            foreach (string flagAndValue in pieces) {
+                var flagStrings = flagAndValue.Split(" ");
+                var flagName = flagStrings[0];
+                var flagArg = flagStrings.Count() > 1 ? flagStrings[1] : null;
+                if (Enum.TryParse<FlagType>(flagName, true, out flag)) {
+
+                    // Should overwrite depth amount?
+                    if (flag == FlagType.D) {
+                        int expandDepth;
+                        if (int.TryParse(flagArg, out expandDepth)) {
+                            ExpandDepth = expandDepth;
+                        }
+                    }
                     flags.Add(flag);
                 }
             }
