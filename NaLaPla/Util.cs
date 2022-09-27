@@ -13,7 +13,7 @@ namespace NaLaPla
         public static List<string> ParseSubTaskList(string itemString) {
 
             // Assume list is like: "1. this 2. that 3. other"
-            var list = itemString.Split(Environment.NewLine).ToList();
+            var list = itemString.Split('\r', '\n').ToList();
 
             list = list.Select((n) => {
                 var breakPos = n.IndexOf(". ");
